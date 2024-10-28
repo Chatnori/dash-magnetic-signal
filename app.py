@@ -321,6 +321,31 @@ app.clientside_callback(
             name: 'B1+B2'
         });
 
+        // Adding initial vectors
+        traces.push({
+            x: [0, B_x1[0]], y: [0, B_y1[0]], z: [0, B_z1[0]],
+            mode: 'line',
+            type: 'scatter3d',
+            marker: { size: 6, color: 'rgb(251, 180, 174)' },
+            name: 'Initial B1'
+        });
+        
+        traces.push({
+            x: [0, B_x2[0]], y: [0, B_y2[0]], z: [0, B_z2[0]],
+            mode: 'line',
+            type: 'scatter3d',
+            marker: { size: 6, color: 'rgb(204, 235, 197)' },
+            name: 'Initial B2'
+        });
+        
+        traces.push({
+            x: [0, B_x1[0]+B_x2[0]], y: [0, B_y1[0]+B_y2[0]], z: [0, B_z1[0]+B_z2[0]],
+            mode: 'line',
+            type: 'scatter3d',
+            marker: { size: 6, color: 'rgb(179, 205, 227)' },
+            name: 'Initial B'
+        });
+
         // Adding origin markers
         traces.push({
             x: [0], y: [0], z: [0],
