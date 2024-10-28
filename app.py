@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from collections import namedtuple
+from dash.dependencies import ClientsideFunction
 
 # 初始化 Dash 应用
 app = Dash(__name__)
@@ -15,107 +16,178 @@ MagParam= namedtuple('MagParam', ['B', 'alpha', 'beta', 'gamma', 'f', 'epsilon',
 t = np.linspace(0, 1, 500)
 
 
-def compute_signals(mag_mode_1, mag_mode_2, B1, B2, f1, f2, alpha1, beta1, gamma1, epsilon1, theta1, alpha2, beta2, gamma2, epsilon2, theta2):
-    alpha1, alpha2, beta1, beta2, gamma1, gamma2, theta1, theta2 = np.radians([alpha1, alpha2, beta1, beta2, gamma1, gamma2, theta1, theta2])
-    if mag_mode_1 == 'Ellipse':
-        # 椭圆磁场
-        # 计算第一个信号的相位角 phi_x1, phi_y1, phi_z1
-        phi_x1 = np.arctan2(-np.cos(gamma1) * np.sin(alpha1) + np.cos(alpha1) * np.sin(beta1) * np.sin(gamma1),
-                            epsilon1 * (np.cos(alpha1) * np.cos(gamma1) * np.sin(beta1) + np.sin(alpha1) * np.sin(gamma1)))
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <script>
+            function compute_signals(mag_mode_1, mag_mode_2, B1, B2, f1, f2, alpha1, beta1, gamma1, epsilon1, theta1, alpha2, beta2, gamma2, epsilon2, theta2) {
+                const radians = (degrees) => degrees * Math.PI / 180;
 
-        phi_y1 = np.arctan2(np.cos(alpha1) * np.cos(gamma1) + np.sin(alpha1) * np.sin(beta1) * np.sin(gamma1),
-                            epsilon1 * (np.cos(gamma1) * np.sin(alpha1) * np.sin(beta1) - np.cos(alpha1) * np.sin(gamma1)))
+                // Convert angles to radians
+                alpha1 = radians(alpha1);
+                beta1 = radians(beta1);
+                gamma1 = radians(gamma1);
+                theta1 = radians(theta1);
+                alpha2 = radians(alpha2);
+                beta2 = radians(beta2);
+                gamma2 = radians(gamma2);
+                theta2 = radians(theta2);
 
-        phi_z1 = np.arctan2(np.cos(beta1) * np.sin(gamma1), epsilon1 * np.cos(beta1) * np.cos(gamma1))
+                let t = Array.from({ length: 500 }, (_, i) => i / 500);
+                let B_x1 = [], B_y1 = [], B_z1 = [];
+                let B_x2 = [], B_y2 = [], B_z2 = [];
 
-        # 计算第一个信号的磁场分量 B_x1, B_y1, B_z1
-        B_x1 = B1 * np.sqrt((-np.cos(gamma1) * np.sin(alpha1) + np.cos(alpha1) * np.sin(beta1) * np.sin(gamma1)) ** 2 +
-                            (epsilon1 * (np.cos(alpha1) * np.cos(gamma1) * np.sin(beta1) + np.sin(alpha1) * np.sin(
-                                gamma1))) ** 2) \
-               * np.sin(2 * np.pi * f1 * t + phi_x1)
+                // First signal calculations
+                if (mag_mode_1 === 'Ellipse') {
+                    const phi_x1 = Math.atan2(
+                        -Math.cos(gamma1) * Math.sin(alpha1) + Math.cos(alpha1) * Math.sin(beta1) * Math.sin(gamma1),
+                        epsilon1 * (Math.cos(alpha1) * Math.cos(gamma1) * Math.sin(beta1) + Math.sin(alpha1) * Math.sin(gamma1))
+                    );
 
-        B_y1 = B1 * np.sqrt((np.cos(alpha1) * np.cos(gamma1) + np.sin(alpha1) * np.sin(beta1) * np.sin(gamma1)) ** 2 +
-                            (epsilon1 * (np.cos(gamma1) * np.sin(alpha1) * np.sin(beta1) - np.cos(alpha1) * np.sin(
-                                gamma1))) ** 2) \
-               * np.sin(2 * np.pi * f1 * t + phi_y1)
+                    const phi_y1 = Math.atan2(
+                        Math.cos(alpha1) * Math.cos(gamma1) + Math.sin(alpha1) * Math.sin(beta1) * Math.sin(gamma1),
+                        epsilon1 * (Math.cos(gamma1) * Math.sin(alpha1) * Math.sin(beta1) - Math.cos(alpha1) * Math.sin(gamma1))
+                    );
 
-        B_z1 = B1 * np.sqrt((np.cos(beta1) * np.sin(gamma1)) ** 2 +
-                            (epsilon1 * np.cos(beta1) * np.cos(gamma1)) ** 2) \
-               * np.sin(2 * np.pi * f1 * t + phi_z1)
-    elif mag_mode_1 == 'Sweep':
-        # 振荡
-        Tri_wave = 4 * theta1 * np.abs(t * f1 - np.floor(t * f1 + 0.75) + 0.25) - theta1
+                    const phi_z1 = Math.atan2(
+                        Math.cos(beta1) * Math.sin(gamma1),
+                        epsilon1 * Math.cos(beta1) * Math.cos(gamma1)
+                    );
 
-        phi_x1 = np.arctan2(np.cos(alpha1) * np.cos(beta1),
-                           -np.cos(gamma1) * np.sin(alpha1) + np.cos(alpha1) * np.sin(beta1) * np.sin(gamma1))
-        phi_y1 = np.arctan2(np.cos(beta1) * np.sin(alpha1),
-                           np.cos(alpha1) * np.cos(gamma1) + np.sin(alpha1) * np.sin(beta1) * np.sin(gamma1))
-        phi_z1 = np.arctan2(-np.sin(beta1), np.cos(beta1) * np.sin(gamma1))
+                    for (let i = 0; i < t.length; i++) {
+                        B_x1[i] = B1 * Math.sqrt(
+                            Math.pow(-Math.cos(gamma1) * Math.sin(alpha1) + Math.cos(alpha1) * Math.sin(beta1) * Math.sin(gamma1), 2) +
+                            Math.pow(epsilon1 * (Math.cos(alpha1) * Math.cos(gamma1) * Math.sin(beta1) + Math.sin(alpha1) * Math.sin(gamma1)), 2)
+                        ) * Math.sin(2 * Math.PI * f1 * t[i] + phi_x1);
 
-        B_x1 = B1 * np.sqrt((np.cos(alpha1) * np.cos(beta1)) ** 2 + (
-                    -np.cos(gamma1) * np.sin(alpha1) + np.cos(alpha1) * np.sin(beta1) * np.sin(gamma1)) ** 2) * np.sin(
-            Tri_wave + phi_x1)
-        B_y1 = B1 * np.sqrt((np.cos(beta1) * np.sin(alpha1)) ** 2 + (
-                    np.cos(alpha1) * np.cos(gamma1) + np.sin(alpha1) * np.sin(beta1) * np.sin(gamma1)) ** 2) * np.sin(
-            Tri_wave + phi_y1)
-        B_z1 = B1 * np.sqrt(np.sin(beta1) ** 2 + (np.cos(beta1) * np.sin(gamma1)) ** 2) * np.sin(
-            Tri_wave + phi_z1)
-    elif mag_mode_1 == 'Static':
-        B_x1 = B1 * np.cos(alpha1) * np.cos(beta1) * np.ones_like(t)
-        B_y1 = B1 * np.cos(beta1) * np.sin(alpha1) * np.ones_like(t)
-        B_z1 = -B1 * np.sin(beta1) * np.ones_like(t)
+                        B_y1[i] = B1 * Math.sqrt(
+                            Math.pow(Math.cos(alpha1) * Math.cos(gamma1) + Math.sin(alpha1) * Math.sin(beta1) * Math.sin(gamma1), 2) +
+                            Math.pow(epsilon1 * (Math.cos(gamma1) * Math.sin(alpha1) * Math.sin(beta1) - Math.cos(alpha1) * Math.sin(gamma1)), 2)
+                        ) * Math.sin(2 * Math.PI * f1 * t[i] + phi_y1);
 
+                        B_z1[i] = B1 * Math.sqrt(
+                            Math.pow(Math.cos(beta1) * Math.sin(gamma1), 2) +
+                            Math.pow(epsilon1 * Math.cos(beta1) * Math.cos(gamma1), 2)
+                        ) * Math.sin(2 * Math.PI * f1 * t[i] + phi_z1);
+                    }
+                } else if (mag_mode_1 === 'Sweep') {
+                    const Tri_wave = t.map(x => 4 * theta1 * Math.abs(x * f1 - Math.floor(x * f1 + 0.75) + 0.25) - theta1);
 
-    if mag_mode_2 == 'Ellipse':
-        # 椭圆磁场
-        # 计算第二个信号的相位角 phi_x2, phi_y2, phi_z2
-        phi_x2 = np.arctan2(np.cos(alpha2) * np.sin(beta2) + np.sin(alpha2) * np.cos(beta2) * np.sin(gamma2),
-                            epsilon2 * (np.cos(alpha2) * np.cos(beta2) - np.sin(alpha2) * np.sin(beta2) * np.sin(gamma2)))
+                    const phi_x1 = Math.atan2(Math.cos(alpha1) * Math.cos(beta1),
+                        -Math.cos(gamma1) * Math.sin(alpha1) + Math.cos(alpha1) * Math.sin(beta1) * Math.sin(gamma1));
+                    const phi_y1 = Math.atan2(Math.cos(beta1) * Math.sin(alpha1),
+                        Math.cos(alpha1) * Math.cos(gamma1) + Math.sin(alpha1) * Math.sin(beta1) * Math.sin(gamma1));
+                    const phi_z1 = Math.atan2(-Math.sin(beta1), Math.cos(beta1) * Math.sin(gamma1));
 
-        phi_y2 = np.arctan2(np.sin(alpha2) * np.sin(beta2) - np.cos(alpha2) * np.cos(beta2) * np.sin(gamma2),
-                            epsilon2 * (np.sin(alpha2) * np.cos(beta2) + np.cos(alpha2) * np.sin(beta2) * np.sin(gamma2)))
+                    for (let i = 0; i < t.length; i++) {
+                        B_x1[i] = B1 * Math.sqrt(
+                            Math.pow(Math.cos(alpha1) * Math.cos(beta1), 2) +
+                            Math.pow(-Math.cos(gamma1) * Math.sin(alpha1) + Math.cos(alpha1) * Math.sin(beta1) * Math.sin(gamma1), 2)
+                        ) * Math.sin(Tri_wave[i] + phi_x1);
 
-        phi_z2 = np.arctan2(np.cos(beta2) * np.cos(gamma2), -epsilon2 * np.sin(beta2) * np.cos(gamma2))
+                        B_y1[i] = B1 * Math.sqrt(
+                            Math.pow(Math.cos(beta1) * Math.sin(alpha1), 2) +
+                            Math.pow(Math.cos(alpha1) * Math.cos(gamma1) + Math.sin(alpha1) * Math.sin(beta1) * Math.sin(gamma1), 2)
+                        ) * Math.sin(Tri_wave[i] + phi_y1);
 
-        # 计算第二个信号的磁场分量 B_x2, B_y2, B_z2
-        B_x2 = B2 * np.sqrt((np.cos(alpha2) * np.sin(beta2) + np.sin(alpha2) * np.cos(beta2) * np.sin(gamma2)) ** 2 +
-                            (epsilon2 * (np.cos(alpha2) * np.cos(beta2) - np.sin(alpha2) * np.sin(beta2) * np.sin(
-                                gamma2))) ** 2) \
-               * np.sin(2 * np.pi * f2 * t + phi_x2)
+                        B_z1[i] = B1 * Math.sqrt(
+                            Math.pow(Math.sin(beta1), 2) +
+                            Math.pow(Math.cos(beta1) * Math.sin(gamma1), 2)
+                        ) * Math.sin(Tri_wave[i] + phi_z1);
+                    }
+                } else if (mag_mode_1 === 'Static') {
+                    for (let i = 0; i < t.length; i++) {
+                        B_x1[i] = B1 * Math.cos(alpha1) * Math.cos(beta1);
+                        B_y1[i] = B1 * Math.cos(beta1) * Math.sin(alpha1);
+                        B_z1[i] = -B1 * Math.sin(beta1);
+                    }
+                }
 
-        B_y2 = B2 * np.sqrt((np.sin(alpha2) * np.sin(beta2) - np.cos(alpha2) * np.cos(beta2) * np.sin(gamma2)) ** 2 +
-                            (epsilon2 * (np.sin(alpha2) * np.cos(beta2) + np.cos(alpha2) * np.sin(beta2) * np.sin(
-                                gamma2))) ** 2) \
-               * np.sin(2 * np.pi * f2 * t + phi_y2)
+                // Second signal calculations (similar to the first one)
+                if (mag_mode_2 === 'Ellipse') {
+                    const phi_x2 = Math.atan2(
+                        Math.cos(alpha2) * Math.sin(beta2) + Math.sin(alpha2) * Math.cos(beta2) * Math.sin(gamma2),
+                        epsilon2 * (Math.cos(alpha2) * Math.cos(beta2) - Math.sin(alpha2) * Math.sin(beta2) * Math.sin(gamma2))
+                    );
 
-        B_z2 = B2 * np.sqrt((np.cos(beta2) * np.cos(gamma2)) ** 2 +
-                            (-epsilon2 * np.sin(beta2) * np.cos(gamma2)) ** 2) \
-               * np.sin(2 * np.pi * f2 * t + phi_z2)
-    elif mag_mode_2 == 'Sweep':
-        # 振荡
-        Tri_wave = 4 * theta2 * np.abs(t * f2 - np.floor(t * f2 + 0.75) + 0.25) - theta2
+                    const phi_y2 = Math.atan2(
+                        Math.sin(alpha2) * Math.sin(beta2) - Math.cos(alpha2) * Math.cos(beta2) * Math.sin(gamma2),
+                        epsilon2 * (Math.sin(alpha2) * Math.cos(beta2) + Math.cos(alpha2) * Math.sin(beta2) * Math.sin(gamma2))
+                    );
 
-        phi_x2 = np.arctan2(-np.sin(alpha2) * np.cos(gamma2),
-                            np.cos(alpha2) * np.sin(beta2) + np.sin(alpha2) * np.cos(beta2) * np.sin(gamma2))
-        phi_y2 = np.arctan2(np.cos(alpha2) * np.cos(gamma2),
-                            np.sin(alpha2) * np.sin(beta2) - np.cos(alpha2) * np.cos(beta2) * np.sin(gamma2))
-        phi_z2 = np.arctan2(np.sin(gamma2), np.cos(beta2) * np.cos(gamma2))
+                    const phi_z2 = Math.atan2(
+                        Math.cos(beta2) * Math.cos(gamma2),
+                        -epsilon2 * Math.sin(beta2) * Math.cos(gamma2)
+                    );
 
-        B_x2 = B2 * np.sqrt((-np.sin(alpha2) * np.cos(gamma2)) ** 2 + (
-                    np.cos(alpha2) * np.sin(beta2) + np.sin(alpha2) * np.cos(beta2) * np.sin(gamma2)) ** 2) * np.sin(
-            Tri_wave + phi_x2)
-        B_y2 = B2 * np.sqrt((np.cos(alpha2) * np.cos(gamma2)) ** 2 + (
-                    np.sin(alpha2) * np.sin(beta2) - np.cos(alpha2) * np.cos(beta2) * np.sin(gamma2)) ** 2) * np.sin(
-            Tri_wave + phi_y2)
-        B_z2 = B2 * np.sqrt(np.sin(gamma2) ** 2 + (np.cos(beta2) * np.cos(gamma2)) ** 2) * np.sin(
-            Tri_wave + phi_z2)
-    elif mag_mode_2 == 'Static':
-        B_x2 = -B2 * np.sin(alpha2) * np.cos(gamma2) * np.ones_like(t)
-        B_y2 = B2 * np.cos(alpha2) * np.cos(gamma2) * np.ones_like(t)
-        B_z2 = B2 * np.sin(gamma2) * np.ones_like(t)
+                    for (let i = 0; i < t.length; i++) {
+                        B_x2[i] = B2 * Math.sqrt(
+                            Math.pow(Math.cos(alpha2) * Math.sin(beta2) + Math.sin(alpha2) * Math.cos(beta2) * Math.sin(gamma2), 2) +
+                            Math.pow(epsilon2 * (Math.cos(alpha2) * Math.cos(beta2) - Math.sin(alpha2) * Math.sin(beta2) * Math.sin(gamma2)), 2)
+                        ) * Math.sin(2 * Math.PI * f2 * t[i] + phi_x2);
 
-    # 叠加两个磁场信号
-    return B_x1, B_y1, B_z1, B_x2, B_y2, B_z2
+                        B_y2[i] = B2 * Math.sqrt(
+                            Math.pow(Math.sin(alpha2) * Math.sin(beta2) - Math.cos(alpha2) * Math.cos(beta2) * Math.sin(gamma2), 2) +
+                            Math.pow(epsilon2 * (Math.sin(alpha2) * Math.cos(beta2) + Math.cos(alpha2) * Math.sin(beta2) * Math.sin(gamma2)), 2)
+                        ) * Math.sin(2 * Math.PI * f2 * t[i] + phi_y2);
+
+                        B_z2[i] = B2 * Math.sqrt(
+                            Math.pow(Math.cos(beta2) * Math.cos(gamma2), 2) +
+                            Math.pow(-epsilon2 * Math.sin(beta2) * Math.cos(gamma2), 2)
+                        ) * Math.sin(2 * Math.PI * f2 * t[i] + phi_z2);
+                    }
+                } else if (mag_mode_2 === 'Sweep') {
+                    const Tri_wave = t.map(x => 4 * theta2 * Math.abs(x * f2 - Math.floor(x * f2 + 0.75) + 0.25) - theta2);
+
+                    const phi_x2 = Math.atan2(-Math.sin(alpha2) * Math.cos(gamma2),
+                        Math.cos(alpha2) * Math.sin(beta2) + Math.sin(alpha2) * Math.cos(beta2) * Math.sin(gamma2));
+                    const phi_y2 = Math.atan2(Math.cos(alpha2) * Math.cos(gamma2),
+                        Math.sin(alpha2) * Math.sin(beta2) - Math.cos(alpha2) * Math.cos(beta2) * Math.sin(gamma2));
+                    const phi_z2 = Math.atan2(Math.sin(gamma2), Math.cos(beta2) * Math.cos(gamma2));
+
+                    for (let i = 0; i < t.length; i++) {
+                        B_x2[i] = B2 * Math.sqrt(
+                            Math.pow(-Math.sin(alpha2) * Math.cos(gamma2), 2) +
+                            Math.pow(Math.cos(alpha2) * Math.sin(beta2) + Math.sin(alpha2) * Math.cos(beta2) * Math.sin(gamma2), 2)
+                        ) * Math.sin(Tri_wave[i] + phi_x2);
+                        B_y2[i] = B2 * Math.sqrt(
+                            Math.pow(Math.cos(alpha2) * Math.cos(gamma2), 2) +
+                            Math.pow(Math.sin(alpha2) * Math.sin(beta2) - Math.cos(alpha2) * Math.cos(beta2) * Math.sin(gamma2), 2)
+                        ) * Math.sin(Tri_wave[i] + phi_y2);
+                        B_z2[i] = B2 * Math.sqrt(
+                            Math.pow(Math.sin(gamma2), 2) +
+                            Math.pow(Math.cos(beta2) * Math.cos(gamma2), 2)
+                        ) * Math.sin(Tri_wave[i] + phi_z2);
+                    }
+                } else if (mag_mode_2 === 'Static') {
+                    for (let i = 0; i < t.length; i++) {
+                        B_x2[i] = -B2 * Math.sin(alpha2) * Math.cos(gamma2);
+                        B_y2[i] = B2 * Math.cos(alpha2) * Math.cos(gamma2);
+                        B_z2[i] = B2 * Math.sin(gamma2);
+                    }
+                }
+
+                // Return the computed signals
+                return [B_x1, B_y1, B_z1, B_x2, B_y2, B_z2];
+            }
+        </script>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
+
 
 # Layout for user input controls and graphs
 app.layout = html.Div([
@@ -198,101 +270,120 @@ app.layout = html.Div([
 ])
 
 # Define the callback function for updating the graph
-@app.callback(
+app.clientside_callback(
+    """
+    function(mag_mode_1, B1, f1, alpha1, beta1, gamma1, epsilon1, theta1,
+             mag_mode_2, B2, f2, alpha2, beta2, gamma2, epsilon2, theta2) {
+        var t = [];
+        for (var i = 0; i < 500; i++) {
+            t.push(i / 500);
+        }
+
+        // Call your compute_signals function here
+        var signals = compute_signals(mag_mode_1, mag_mode_2, B1, B2, f1, f2, alpha1, beta1, gamma1, epsilon1, theta1, alpha2, beta2, gamma2, epsilon2, theta2);
+        var B_x1 = signals[0], B_y1 = signals[1], B_z1 = signals[2];
+        var B_x2 = signals[3], B_y2 = signals[4], B_z2 = signals[5];
+
+        var traces = [];
+
+        // First field visualization
+        traces.push({
+            x: B_x1,
+            y: B_y1,
+            z: B_z1,
+            mode: mag_mode_1 !== 'Static' ? 'lines' : 'markers',
+            type: 'scatter3d',
+            line: { width: 6, color: 'red' },
+            marker: { size: 6, color: 'red' },
+            name: 'B1'
+        });
+
+        // Second field visualization
+        traces.push({
+            x: B_x2,
+            y: B_y2,
+            z: B_z2,
+            mode: mag_mode_2 !== 'Static' ? 'lines' : 'markers',
+            type: 'scatter3d',
+            line: { width: 6, color: 'green' },
+            marker: { size: 6, color: 'green' },
+            name: 'B2'
+        });
+
+        // Third subplot: B1 + B2
+        traces.push({
+            x: B_x1.map((v, i) => v + B_x2[i]),
+            y: B_y1.map((v, i) => v + B_y2[i]),
+            z: B_z1.map((v, i) => v + B_z2[i]),
+            mode: 'lines',
+            type: 'scatter3d',
+            line: { width: 6, color: 'blue' },
+            name: 'B1+B2'
+        });
+
+        // Adding origin markers
+        traces.push({
+            x: [0], y: [0], z: [0],
+            mode: 'markers',
+            type: 'scatter3d',
+            marker: { size: 6, color: 'black' },
+            name: 'O1'
+        });
+
+        traces.push({
+            x: [0], y: [0], z: [0],
+            mode: 'markers',
+            type: 'scatter3d',
+            marker: { size: 6, color: 'black' },
+            name: 'O2'
+        });
+
+        traces.push({
+            x: [0], y: [0], z: [0],
+            mode: 'markers',
+            type: 'scatter3d',
+            marker: { size: 6, color: 'black' },
+            name: 'O3'
+        });
+
+        return {
+            data: traces,
+            layout: {
+                title: '3D Magnetic Field Components',
+                width: 1600,
+                height: 600,
+                scene: {
+                    aspectmode: 'cube',
+                    xaxis: { title: 'X', range: [Math.min(-2, -B1-B2), Math.max(2, B1+B2)] },
+                    yaxis: { title: 'Y', range: [Math.min(-2, -B1-B2), Math.max(2, B1+B2)] },
+                    zaxis: { title: 'Z', range: [Math.min(-2, -B1-B2), Math.max(2, B1+B2)] }
+                }
+            }
+        };
+    }
+    """,
     Output('magnetic-field-graph', 'figure'),
-    [Input("mag-mode-1", "value"),
-     Input('B1', 'value'), Input('f1', 'value'), Input('alpha1', 'value'),
-     Input('beta1', 'value'), Input('gamma1', 'value'), Input('epsilon1', 'value'), Input('theta1', 'value'),
-     Input("mag-mode-2", "value"),
-     Input('B2', 'value'), Input('f2', 'value'), Input('alpha2', 'value'),
-     Input('beta2', 'value'), Input('gamma2', 'value'), Input('epsilon2', 'value')], Input('theta2', 'value'),
+    [
+        Input("mag-mode-1", "value"),
+        Input('B1', 'value'), Input('f1', 'value'), Input('alpha1', 'value'),
+        Input('beta1', 'value'), Input('gamma1', 'value'), Input('epsilon1', 'value'), Input('theta1', 'value'),
+        Input("mag-mode-2", "value"),
+        Input('B2', 'value'), Input('f2', 'value'), Input('alpha2', 'value'),
+        Input('beta2', 'value'), Input('gamma2', 'value'), Input('epsilon2', 'value'), Input('theta2', 'value'),
+    ]
 )
-def update_graph(mag_mode_1, B1, f1, alpha1, beta1, gamma1, epsilon1, theta1, mag_mode_2, B2, f2, alpha2, beta2, gamma2, epsilon2, theta2):
-    t = np.linspace(0, 1, 500)
-    # Call your compute_signals function with the updated parameters
-    B_x1, B_y1, B_z1, B_x2, B_y2, B_z2 = compute_signals(mag_mode_1, mag_mode_2, B1, B2, f1, f2, alpha1, beta1, gamma1, epsilon1, theta1, alpha2, beta2, gamma2, epsilon2, theta2)
-    B_length = B1 + B2
 
-    fig = make_subplots(
-        rows=1, cols=3,
-        specs=[[{'type': 'scatter3d'}, {'type': 'scatter3d'}, {'type': 'scatter3d'}]],
-        subplot_titles=("B1", "B2", "B Total")
-    )
-
-    # First field visualization
-    fig.add_trace(
-        go.Scatter3d(
-            x=B_x1, y=B_y1, z=B_z1,
-            mode='lines' if mag_mode_1 != 'Static' else 'markers',
-            line=dict(width=6, color='red') if mag_mode_1 != 'Static' else None,
-            marker=dict(size=6, color='red') if mag_mode_1 == 'Static' else None,
-            name='B1'
-        ),
-        row=1, col=1
-    )
-
-    # Second field visualization
-    fig.add_trace(
-        go.Scatter3d(
-            x=B_x2, y=B_y2, z=B_z2,
-            mode='lines' if mag_mode_2 != 'Static' else 'markers',
-            line=dict(width=6, color='green') if mag_mode_2 != 'Static' else None,
-            marker=dict(size=6, color='green') if mag_mode_2 == 'Static' else None,
-            name='B2'
-        ),
-        row=1, col=2
-    )
-
-    # 添加第三个子图：B_1 + B_2
-    fig.add_trace(go.Scatter3d(
-        x=B_x1 + B_x2, y=B_y1 + B_y2, z=B_z1 + B_z2,
-        mode='lines',
-        line=dict(width=6, color='blue'),
-        name='B1+B2'
-    ), row=1, col=3)
-
-    # 添加原点标记
-    marker_size = 6
-    fig.add_trace(go.Scatter3d(
-        x=[0], y=[0], z=[0],
-        mode='markers',
-        marker=dict(size=marker_size, color='black'),
-        name='O1'
-    ), row=1, col=1)
-
-    fig.add_trace(go.Scatter3d(
-        x=[0], y=[0], z=[0],
-        mode='markers',
-        marker=dict(size=marker_size, color='black'),
-        name='O2'
-    ), row=1, col=2)
-
-    fig.add_trace(go.Scatter3d(
-        x=[0], y=[0], z=[0],
-        mode='markers',
-        marker=dict(size=marker_size, color='black'),
-        name='O3'
-    ), row=1, col=3)
-
-    fig.update_layout(
-        title='3D Magnetic Field Components',
-        width=1600,
-        height=600,
-        scene=dict(aspectmode='cube'),
-        scene2=dict(aspectmode='cube'),
-        scene3=dict(aspectmode='cube')
-    )
-    # 设置各个子图的范围
-    fig.update_scenes(
-        xaxis=dict(range=[min(-2, -B_length), max(2, B_length)]),
-        yaxis=dict(range=[min(-2, -B_length), max(2, B_length)]),
-        zaxis=dict(range=[min(-2, -B_length), max(2, B_length)])
-    )
-
-    return fig
 
 # 同步input和slider
-@app.callback(
+app.clientside_callback(
+    """
+    function(B1, f1, alpha1, beta1, gamma1, epsilon1, theta1,
+             B2, f2, alpha2, beta2, gamma2, epsilon2, theta2) {
+        // Return the values directly
+        return [B1, f1, alpha1, beta1, gamma1, epsilon1, theta1,
+                B2, f2, alpha2, beta2, gamma2, epsilon2, theta2];
+    }
+    """,
     [
         Output('B1', 'value'),
         Output('f1', 'value'),
@@ -327,11 +418,17 @@ def update_graph(mag_mode_1, B1, f1, alpha1, beta1, gamma1, epsilon1, theta1, ma
     ],
     prevent_initial_call=True
 )
-def update_sliders(B1, f1, alpha1, beta1, gamma1, epsilon1, theta1, B2, f2, alpha2, beta2, gamma2, epsilon2, theta2):
-    return B1, f1, alpha1, beta1, gamma1, epsilon1, theta1, B2, f2, alpha2, beta2, gamma2, epsilon2, theta2
 
-# Callback to update input boxes when sliders are moved
-@app.callback(
+
+app.clientside_callback(
+    """
+    function(B1, f1, alpha1, beta1, gamma1, epsilon1, theta1,
+             B2, f2, alpha2, beta2, gamma2, epsilon2, theta2) {
+        // Return the values directly
+        return [B1, f1, alpha1, beta1, gamma1, epsilon1, theta1,
+                B2, f2, alpha2, beta2, gamma2, epsilon2, theta2];
+    }
+    """,
     [
         Output('B1-input', 'value'),
         Output('f1-input', 'value'),
@@ -366,8 +463,6 @@ def update_sliders(B1, f1, alpha1, beta1, gamma1, epsilon1, theta1, B2, f2, alph
     ],
     prevent_initial_call=True
 )
-def update_inputs(B1, f1, alpha1, beta1, gamma1, epsilon1, theta1, B2, f2, alpha2, beta2, gamma2, epsilon2, theta2):
-    return B1, f1, alpha1, beta1, gamma1, epsilon1, theta1, B2, f2, alpha2, beta2, gamma2, epsilon2, theta2
 
 
 
