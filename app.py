@@ -419,9 +419,9 @@ app.clientside_callback(
                 height: 600,
                 scene: {
                     aspectmode: 'cube',
-                    xaxis: { title: 'X', range: [Math.min(-2, -B1-B2), Math.max(2, B1+B2)] },
-                    yaxis: { title: 'Y', range: [Math.min(-2, -B1-B2), Math.max(2, B1+B2)] },
-                    zaxis: { title: 'Z', range: [Math.min(-2, -B1-B2), Math.max(2, B1+B2)] }
+                    xaxis: { title: 'X', range: [Math.min(-2, -Math.ceil(B1+B2)), Math.max(2, Math.ceil(B1+B2))] },
+                    yaxis: { title: 'Y', range: [Math.min(-2, -Math.ceil(B1+B2)), Math.max(2, Math.ceil(B1+B2))] },
+                    zaxis: { title: 'Z', range: [Math.min(-2, -Math.ceil(B1+B2)), Math.max(2, Math.ceil(B1+B2))] },
                 }
             }
         };
