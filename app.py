@@ -6,13 +6,14 @@ from plotly.subplots import make_subplots
 from collections import namedtuple
 from dash.dependencies import ClientsideFunction
 from dash.dash import no_update
+import json
 
 
 # 初始化 Dash 应用
 app = Dash(
     __name__,
-    serve_locally=True,  
-    assets_ignore='.*'   
+    serve_locally=True,  # 强制应用加载本地静态资源
+    assets_ignore='.*'   # 避免加载与静态资源生成相关的文件
 )
 
 # 定义磁场参数
@@ -21,6 +22,12 @@ MagParam= namedtuple('MagParam', ['B', 'alpha', 'beta', 'gamma', 'f', 'epsilon',
 # 设置初始参数
 t = np.linspace(0, 1, 500)
 
+camera_views = {
+    'Diagonal': dict(eye = dict(x=1.2, y=1.2, z=1.2)),
+    'Front': dict(eye=dict(x=2, y=0, z=0)),
+    'Side': dict(eye=dict(x=0, y=2, z=0)),
+    'Top': dict(eye=dict(x=0, y=0, z=2))
+}
 
 app.index_string = '''
 <!DOCTYPE html>
@@ -203,6 +210,7 @@ app.layout = html.Div([
         html.Div([
             html.H4("Magnetic Field 1 Mode"),
             html.H5("Follow Tait-Bryan z(α)-y\'(β)-x\'\'(γ), initial signal axis X"),
+
             dcc.RadioItems(
                 ["Ellipse", "Sweep", "Static"], "Ellipse", id="mag-mode-1"
             ),
@@ -308,6 +316,18 @@ app.layout = html.Div([
             html.H5("For the same signal axis and starting phase, refer to α2 = α1 - 90°; γ2 = -β1; β2 = γ1 - 90°."),
         ], style={'flex': '1', 'margin': '10px'}),
     ]),
+
+    html.Div([
+        dcc.RadioItems(
+            id='camera-view-selector',
+            options=[{'label': view, 'value': view} for view in camera_views.keys()],
+            value='Front',
+            inline=True
+        ),
+        dcc.Store(id='camera-views-store', data=json.dumps(camera_views))
+    ]),
+
+
     # Output Graph
     dcc.Graph(id='magnetic-field-graph')
 ])
@@ -316,7 +336,12 @@ app.layout = html.Div([
 app.clientside_callback(
     """
     function(mag_mode_1, B1, f1, alpha1, beta1, gamma1, epsilon1, theta1,
-             mag_mode_2, B2, f2, alpha2, beta2, gamma2, epsilon2, theta2) {
+             mag_mode_2, B2, f2, alpha2, beta2, gamma2, epsilon2, theta2,
+             selected_view, camera_views_json) {
+
+        // 解析 camera_views 数据
+        var camera_views = JSON.parse(camera_views_json);
+        var selected_camera = camera_views[selected_view];
         var t = [];
         for (var i = 0; i < 500; i++) {
             t.push(i / 500);
@@ -421,6 +446,7 @@ app.clientside_callback(
                 width: 1600,
                 height: 600,
                 scene: {
+                    camera: selected_camera,
                     aspectmode: 'cube',
                     xaxis: { title: 'X', range: [Math.min(-2, -Math.ceil(B1+B2)), Math.max(2, Math.ceil(B1+B2))] },
                     yaxis: { title: 'Y', range: [Math.min(-2, -Math.ceil(B1+B2)), Math.max(2, Math.ceil(B1+B2))] },
@@ -438,6 +464,8 @@ app.clientside_callback(
         Input("mag-mode-2", "value"),
         Input('B2', 'value'), Input('f2', 'value'), Input('alpha2', 'value'),
         Input('beta2', 'value'), Input('gamma2', 'value'), Input('epsilon2', 'value'), Input('theta2', 'value'),
+        Input('camera-view-selector', 'value'),
+        Input('camera-views-store', 'data')
     ]
 )
 
@@ -531,8 +559,6 @@ app.clientside_callback(
     ],
     prevent_initial_call=True
 )
-
-
 
 # 运行应用
 if __name__ == '__main__':
