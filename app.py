@@ -11,8 +11,8 @@ from dash.dash import no_update
 # 初始化 Dash 应用
 app = Dash(
     __name__,
-    serve_locally=True,  # 强制应用加载本地静态资源
-    assets_ignore='.*'   # 避免加载与静态资源生成相关的文件
+    serve_locally=True,  
+    assets_ignore='.*'   
 )
 
 # 定义磁场参数
@@ -202,6 +202,7 @@ app.layout = html.Div([
         # Field 1 Controls
         html.Div([
             html.H4("Magnetic Field 1 Mode"),
+            html.H5("Follow Tait-Bryan z(α)-y\'(β)-x\'\'(γ), initial signal axis X"),
             dcc.RadioItems(
                 ["Ellipse", "Sweep", "Static"], "Ellipse", id="mag-mode-1"
             ),
@@ -221,21 +222,21 @@ app.layout = html.Div([
                 style={'width': '50%'}),
 
             html.Label("α1 (°)", style={'margin-right': '10px'}),
-            dcc.Input(id='alpha1-input', type='number', value=0, step=10, style={'width': '100px'}),
+            dcc.Input(id='alpha1-input', type='number', value=0, step=5, style={'width': '100px'}),
             html.Div(style={'height': '10px'}),  # Adjust height as needed
-            html.Div(dcc.Slider(id='alpha1', min=0, max=360, step=10, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
+            html.Div(dcc.Slider(id='alpha1', min=0, max=360, step=5, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
                      style={'width': '50%'}),
 
             html.Label("β1 (°)", style={'margin-right': '10px'}),
-            dcc.Input(id='beta1-input', type='number', value=0, step=10, style={'width': '100px'}),
+            dcc.Input(id='beta1-input', type='number', value=0, step=5, style={'width': '100px'}),
             html.Div(style={'height': '10px'}),  # Adjust height as needed
-            html.Div(dcc.Slider(id='beta1', min=0, max=360, step=10, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
+            html.Div(dcc.Slider(id='beta1', min=0, max=360, step=5, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
                      style={'width': '50%'}),
 
             html.Label("γ1 (°)", style={'margin-right': '10px'}),
-            dcc.Input(id='gamma1-input', type='number', value=0, step=10, style={'width': '100px'}),
+            dcc.Input(id='gamma1-input', type='number', value=0, step=5, style={'width': '100px'}),
             html.Div(style={'height': '10px'}),  # Adjust height as needed
-            html.Div(dcc.Slider(id='gamma1', min=0, max=360, step=10, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
+            html.Div(dcc.Slider(id='gamma1', min=0, max=360, step=5, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
                      style={'width': '50%'}),
 
             html.Label("ε1", style={'margin-right': '10px'}),
@@ -255,6 +256,7 @@ app.layout = html.Div([
         # Field 2 Controls
         html.Div([
             html.H4("Magnetic Field 2 Mode"),
+            html.H5("Follow Tait-Bryan z(α)-x\'(γ)-y\'\'(β), initial signal axis Y"),
             dcc.RadioItems(
                 ["Ellipse", "Sweep", "Static"], "Ellipse", id="mag-mode-2"
             ),
@@ -274,21 +276,21 @@ app.layout = html.Div([
                 style={'width': '50%'}),
 
             html.Label("α2 (°)", style={'margin-right': '10px'}),
-            dcc.Input(id='alpha2-input', type='number', value=0, step=10, style={'width': '100px'}),
+            dcc.Input(id='alpha2-input', type='number', value=0, step=5, style={'width': '100px'}),
             html.Div(style={'height': '10px'}),  # Adjust height as needed
-            html.Div(dcc.Slider(id='alpha2', min=0, max=360, step=10, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
+            html.Div(dcc.Slider(id='alpha2', min=0, max=360, step=5, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
                      style={'width': '50%'}),
 
             html.Label("β2 (°)", style={'margin-right': '10px'}),
-            dcc.Input(id='beta2-input', type='number', value=0, step=10, style={'width': '100px'}),
+            dcc.Input(id='beta2-input', type='number', value=0, step=5, style={'width': '100px'}),
             html.Div(style={'height': '10px'}),  # Adjust height as needed
-            html.Div(dcc.Slider(id='beta2', min=0, max=360, step=10, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
+            html.Div(dcc.Slider(id='beta2', min=0, max=360, step=5, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
                      style={'width': '50%'}),
 
             html.Label("γ2 (°)", style={'margin-right': '10px'}),
-            dcc.Input(id='gamma2-input', type='number', value=0, step=10, style={'width': '100px'}),
+            dcc.Input(id='gamma2-input', type='number', value=0, step=5, style={'width': '100px'}),
             html.Div(style={'height': '10px'}),  # Adjust height as needed
-            html.Div(dcc.Slider(id='gamma2', min=0, max=360, step=10, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
+            html.Div(dcc.Slider(id='gamma2', min=0, max=360, step=5, value=0, marks={0: '0', 180: '180', 360: '360'}, updatemode='drag'),
                      style={'width': '50%'}),
 
             html.Label("ε2", style={'margin-right': '10px'}),
@@ -303,6 +305,7 @@ app.layout = html.Div([
             html.Div(style={'height': '10px'}),  # Adjust height as needed
             html.Div(dcc.Slider(id='theta2', min=0, max=180, step=5, value=45, marks={0: '0', 180: '180'}, updatemode='drag'),
                      style={'width': '50%'}),
+            html.H5("For the same signal axis and starting phase, refer to α2 = α1 - 90°; γ2 = -β1; β2 = γ1 - 90°."),
         ], style={'flex': '1', 'margin': '10px'}),
     ]),
     # Output Graph
